@@ -117,3 +117,75 @@ void Shader::setVec3f(const std::string &name, glm::vec3 value) const{
     glUniform3fv(glGetUniformLocation(ID, name.c_str()), 1, glm::value_ptr(value));
 }
 
+void Shader::setMaterial(const std::string &name) const{
+    //the materials.txt should have this setting
+    //material  ambient diffuse speculat shininess
+    std::string materialFilePath = "/home/abhinas/devs/C++/OpenGl/Lighting/resources/materials.txt";
+    std::ifstream materialFilePointer;
+    std::vector<float> materialValues;
+    bool isMaterialName = true;
+    std::string terminator = " ";
+    std::string singleMaterial;
+
+    //open the material file
+    materialFilePointer.open(materialFilePath);
+
+    if( !materialFilePointer ){
+
+        std::cout<<"Couldn't find materials.txt";
+        materialFilePointer.close();
+        return;
+    }
+    
+    while( !materialFilePointer.eof() ){
+
+        getline(materialFilePointer, singleMaterial);
+        if( (singleMaterial.find(name)  == 0) && (name.length() != 0) ){
+
+            size_t pos = 0;
+
+            while( (pos = singleMaterial.find(terminator) ) != std::string::npos ){
+
+                if( isMaterialName ){
+                    singleMaterial.erase(0, pos + terminator.length());
+                    isMaterialName = false;
+                }
+
+                materialValues.push_back(stof(singleMaterial.substr(0, pos)));
+                singleMaterial.erase(0, pos + terminator.length());
+
+            }
+
+            break;
+        }
+    }
+
+    materialFilePointer.close();
+
+    if(isMaterialName){
+        std::cout<<"Couldn't find the material "<<name<<" in material.txt"<<std::endl;
+    }
+
+    Material material;
+
+    material.ambient.x = materialValues[0];
+    material.ambient.y = materialValues[1];
+    material.ambient.z = materialValues[2];
+
+    material.diffuse.x = materialValues[3];
+    material.diffuse.y = materialValues[4];
+    material.diffuse.z = materialValues[5];
+
+    material.specular.x = materialValues[6];
+    material.specular.y = materialValues[7];
+    material.specular.z = materialValues[8];
+
+    material.shininess = materialValues[9];
+
+    setVec3f("material.ambient", material.ambient);
+    setVec3f("material.diffuse", material.diffuse);
+    setVec3f("material.specular", material.specular);
+    setFloat("material.shininess", material.shininess);
+}
+
+

@@ -11,7 +11,7 @@
 void processInput(double dt);
 
 //camera positions
-glm::vec3 cameraPos = glm::vec3(0.0f, 20.0f, 0.0f);
+glm::vec3 cameraPos = glm::vec3(10.0f, 20.0f, 0.0f);
 Camera ourCamera(cameraPos);
 
 //make our screen class
@@ -43,70 +43,91 @@ int main(){
     );
 
     //the dimension and no of channels in image
-    int width, height, nrChannels;
+    int width_height_map, height_height_map, nrChannels;
+    int widht_normal_map, height_normal_map, nrChannelsNormal;
 
     stbi_set_flip_vertically_on_load(true);
 
-    //load the height map
-    unsigned char* data = stbi_load(
+    //load the height_height_map map
+    unsigned char* dataHeightMap = stbi_load(
     "/home/abhinas/devs/C++/terrainGeneration/resources/maps/everest_heightmap.png",
-    &width,
-    &height,
+    &width_height_map,
+    &height_height_map,
     &nrChannels,
     0
     );
 
-    //limit our scaling
-    // float yScale = 64.0f / 256.0f, yShift = 16.0f;
+    unsigned char* dataNormalMap = stbi_load(
+        "/home/abhinas/devs/C++/terrainGeneration/resources/maps/NormalMap.png",
+        &widht_normal_map,
+        &height_normal_map,
+        &nrChannelsNormal,
+        0
+    );
+
 
     //resolution for output triangles
     //lower the better
     int resolution = 3;
 
-    //generate our height map
+    //generate our height_height_map map
     std::vector<float> vertices;
 
     //convert int to unsigned int
     unsigned int pixelSize = nrChannels;
+    unsigned int normalPixelSize = nrChannelsNormal;
 
-    for( int i = 0; i < height; i++ ){
+    for( int i = 0; i < height_height_map; i++ ){
 
-        for( int j = 0; j < width; j++ ){
+        for( int j = 0; j < width_height_map; j++ ){
 
-            //only take first channel value as our height
-            unsigned char* pixelOffset = data + (j + width * i) * pixelSize;
-            unsigned char y = pixelOffset[0];   //height i.e y coord
+            //only take first channel value as our height_height_map
+            unsigned char* pixelOffset = dataHeightMap + (j + width_height_map * i) * pixelSize;
+            unsigned char y = pixelOffset[0];   //height_height_map i.e y coord
 
             //push the vertex values
-            //make x range from -height/2 to +height/2
-            vertices.push_back( - height / 2.0f + i);
-            //normalize the height and scale to desired range
+            //make x range from -height_height_map/2 to +height_height_map/2
+            vertices.push_back( - height_height_map / 2.0f + i);
+            //normalize the height_height_map and scale to desired range
             vertices.push_back( y - 100.0f);
-            //make z range from -widht/2 to +width/2
-            vertices.push_back( - width / 2.0f + j); //vertices.z
+            //make z range from -widht/2 to +width_height_map/2
+            vertices.push_back( - width_height_map / 2.0f + j); //vertices.z
+
+            //load normal data
+            unsigned char* normalOffset = dataNormalMap + (j + widht_normal_map * i) * normalPixelSize;
+            unsigned char nor_x = normalOffset[0];
+            unsigned char nor_y = normalOffset[1];
+            unsigned char nor_z = normalOffset[2];
+
+            //push normal values
+            vertices.push_back(nor_x);  //normal.x
+            vertices.push_back(nor_y);  //normal.y
+            vertices.push_back(nor_z);  //normal.z
+
         }
     }
 
     //free the data
-    stbi_image_free(data);
+    stbi_image_free(dataHeightMap);
+    stbi_image_free(dataNormalMap);
 
     //create indices to draw the traingles from a square
     std::vector<unsigned int> indices;
 
-    for( unsigned int i = 0; i < height - 1; i += resolution){
+    for( unsigned int i = 0; i < height_height_map - 1; i += resolution){
 
-        for( unsigned int j = 0; j < width; j += resolution){
+        for( unsigned int j = 0; j < width_height_map; j += resolution){
 
             for (unsigned int k = 0; k < 2; k++ ){
 
-                indices.push_back(j + width * ( i + k * resolution));
+                indices.push_back(j + width_height_map * ( i + k * resolution));
             }
         }
     }
 
     //to draw terrain strip by strip find total no_of strip
-    const int totalNumStrips = (height - 1) / resolution;
-    const int verticesPerStripe = (width / resolution) * 2;  //this determines the width of rendered seen
+    const int totalNumStrips = (height_height_map - 1) / resolution;
+    const int verticesPerStripe = (width_height_map / resolution) * 2;  //this determines the width_height_map of rendered seen
 
     //send data to gpu
     unsigned int VAO, VBO, EBO;
@@ -123,14 +144,16 @@ int main(){
 
     //enable the attrib pointer
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)0);   //for vertices
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)(sizeof(float) * 3));     //for normals
 
     //bind ebo to element array buffer
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
     //draw in wireframe mode
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     //run the main loop
     while( !ourScreen.shouldClose()){
@@ -155,6 +178,26 @@ int main(){
         ourShader.setMat4("model", model);
         ourShader.setMat4("view", view);
         ourShader.setMat4("projection", projection);
+
+        //send the material properites
+        ourShader.setMaterial("gold");
+
+
+        //send light properties
+        //for directional light
+        ourShader.setVec3f("dirLight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
+        ourShader.setVec3f("dirLight.ambient", glm::vec3(0.001f));
+        ourShader.setVec3f("dirLight.diffuse", glm::vec3(0.5f));
+        ourShader.setVec3f("dirLight.specular", glm::vec3(1.0f));
+
+        //for spotLight
+        ourShader.setVec3f("spotLight.position", ourCamera.cameraPos);
+        ourShader.setVec3f("spotLight.direction", ourCamera.cameraFront);
+        ourShader.setVec3f("spotLight.ambient", glm::vec3(0.0f));
+        ourShader.setVec3f("spotLight.diffuse", glm::vec3(1.0f));
+        ourShader.setVec3f("spotLight.specular", glm::vec3(1.0f));
+        ourShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(15.0f)));
+        ourShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(20.0f)));
 
         //render the cube
         glBindVertexArray(VAO);
