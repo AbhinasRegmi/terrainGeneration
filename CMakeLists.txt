@@ -1,0 +1,37 @@
+cmake_minimum_required(VERSION 3.1)
+
+#set the project name
+project("app")
+
+#specify the c++ standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+#specify the includes for graphics and io
+include_directories(graphics)
+include_directories(io)
+
+#build library files
+add_library(io_keyboard io/keyboard.cpp)
+add_library(io_mouse io/mouse.cpp)
+add_library(io_camera io/camera.cpp)
+add_library(io_screen io/screen.cpp)
+add_library(shaders graphics/shaders.cpp)
+
+#build the target
+add_executable(${PROJECT_NAME} main.cpp glad.c)
+
+#path to include and libs
+target_include_directories(${PROJECT_NAME} PUBLIC external/include)
+target_link_directories(${PROJECT_NAME} PUBLIC external/libs)
+
+#link the required libraries 
+target_link_libraries(${PROJECT_NAME}
+GL dl glfw
+shaders
+io_keyboard
+io_mouse
+io_camera
+io_screen
+)
+
