@@ -66,8 +66,8 @@ vec3 dirLightCalculation(DirLight light, vec3 normal, vec3 viewDir){
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 
     //combine
-    vec3 ambient = light.ambient * material.ambient;
-    vec3 diffuse = light.diffuse * ( diff * material.diffuse) * 1.3;
+    vec3 ambient = light.ambient * material.ambient * 2.0;
+    vec3 diffuse = light.diffuse * ( diff * material.diffuse) * 4.0;
     vec3 specular = light.specular * (spec * material.specular);
 
     return (ambient + diffuse + specular);

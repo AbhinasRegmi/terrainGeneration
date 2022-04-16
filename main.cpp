@@ -11,7 +11,7 @@
 void processInput(double dt);
 
 //camera positions
-glm::vec3 cameraPos = glm::vec3(10.0f, 20.0f, 0.0f);
+glm::vec3 cameraPos = glm::vec3(-5.0f, 0.0f, -150.0f);
 Camera ourCamera(cameraPos);
 
 //make our screen class
@@ -153,7 +153,7 @@ int main(){
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
     //draw in wireframe mode
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     //run the main loop
     while( !ourScreen.shouldClose()){
@@ -182,11 +182,10 @@ int main(){
         //send the material properites
         ourShader.setMaterial("gold");
 
-
         //send light properties
         //for directional light
-        ourShader.setVec3f("dirLight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));
-        ourShader.setVec3f("dirLight.ambient", glm::vec3(0.001f));
+        ourShader.setVec3f("dirLight.direction", glm::vec3(-0.5, -0.5, 0.6));
+        ourShader.setVec3f("dirLight.ambient", glm::vec3(0.1f));
         ourShader.setVec3f("dirLight.diffuse", glm::vec3(0.5f));
         ourShader.setVec3f("dirLight.specular", glm::vec3(1.0f));
 
