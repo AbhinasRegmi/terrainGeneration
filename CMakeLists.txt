@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1)
 
 #set the project name
-project("app")
+project("terrain")
 
 #specify the c++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -34,4 +34,9 @@ io_mouse
 io_camera
 io_screen
 )
+
+#create a zip file (app) for distribution
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
+include(InstallRequiredSystemLibraries)
+include(CPack)
 
