@@ -8,7 +8,7 @@ Camera::Camera(glm::vec3 position){
 
     yaw = -90.0f;
     pitch = 0.0f;
-    speed = 35.0f;
+    speed = 10.0f;
     sensitivity = 0.5f;
 
     zoom = 45.0f;

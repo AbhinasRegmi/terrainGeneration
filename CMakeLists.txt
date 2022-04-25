@@ -7,6 +7,11 @@ project("terrain")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+#specify includes for external include and libs
+include_directories(external/include)
+link_directories(external/libs)
+
+
 #specify the includes for graphics and io
 include_directories(graphics)
 include_directories(io)
@@ -17,18 +22,17 @@ add_library(io_mouse io/mouse.cpp)
 add_library(io_camera io/camera.cpp)
 add_library(io_screen io/screen.cpp)
 add_library(shaders graphics/shaders.cpp)
+add_library(polynomial graphics/noise/polynomial.cpp)
+add_library(perlin graphics/noise/perlin.cpp)
 
 #build the target
 add_executable(${PROJECT_NAME} main.cpp glad.c)
 
-#path to include and libs
-target_include_directories(${PROJECT_NAME} PUBLIC external/include)
-target_link_directories(${PROJECT_NAME} PUBLIC external/libs)
 
 #link the required libraries 
 target_link_libraries(${PROJECT_NAME}
 GL dl glfw
-shaders
+shaders polynomial perlin
 io_keyboard
 io_mouse
 io_camera

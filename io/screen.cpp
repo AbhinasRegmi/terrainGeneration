@@ -38,7 +38,7 @@ void Screen::init(std::string name, int width, int height){
 
 void Screen::callBacks(){
 
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     glfwSetFramebufferSizeCallback(window, frameBufferSizeCallBack);
     glfwSetKeyCallback(window, Keyboard::keyCallback);
@@ -60,7 +60,7 @@ void Screen::loadOpenGl(){
 
 void Screen::update(){
 
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 };
 
