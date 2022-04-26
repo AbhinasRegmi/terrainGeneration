@@ -1,5 +1,6 @@
 #include "shaders.h"
-#include "noise/polynomial.h"
+#include "noise/simplex.h"
+#include "noise/fractal.h"
 
 #include "keyboard.h"
 #include "mouse.h"
@@ -47,9 +48,9 @@ int main(){
     int width, height, squareGridLength;
 
     //choose squareGridLength such that both width and height is divisible i.e 100/5 = 20
-    width = 100;
-    height = 100;
-    squareGridLength = 2;
+    width = 1000;
+    height = 1000;
+    squareGridLength = 20;
 
     //resolution for output triangles
     //lower the better
@@ -59,7 +60,7 @@ int main(){
     std::vector<float> vertices;
 
     //create object of our noise
-    Noise ourNoise(height, width, squareGridLength);
+    Fractal ourNoise(height, width);
 
     for( int i = 0; i < height; i++ ){
 
@@ -71,7 +72,7 @@ int main(){
 
             //compute and replace y-coord position
             //compute grid coordinates
-           vertices.push_back(ourNoise.polynomial(i, j));
+           vertices.push_back( ourNoise.genHeight(i, j));
             
             //z-coord position
             vertices.push_back(j);

@@ -22,17 +22,17 @@ add_library(io_mouse io/mouse.cpp)
 add_library(io_camera io/camera.cpp)
 add_library(io_screen io/screen.cpp)
 add_library(shaders graphics/shaders.cpp)
-add_library(polynomial graphics/noise/polynomial.cpp)
-add_library(perlin graphics/noise/perlin.cpp)
+add_library(simplex graphics/noise/simplex.cpp)
+add_library(fractal graphics/noise/fractal.cpp)
 
 #build the target
-add_executable(${PROJECT_NAME} main.cpp glad.c)
+add_executable(${PROJECT_NAME} main.cpp glad.c graphics/noise/simplex.cpp)
 
 
 #link the required libraries 
 target_link_libraries(${PROJECT_NAME}
 GL dl glfw
-shaders polynomial perlin
+shaders fractal
 io_keyboard
 io_mouse
 io_camera
