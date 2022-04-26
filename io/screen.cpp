@@ -38,7 +38,7 @@ void Screen::init(std::string name, int width, int height){
 
 void Screen::callBacks(){
 
-    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     glfwSetFramebufferSizeCallback(window, frameBufferSizeCallBack);
     glfwSetKeyCallback(window, Keyboard::keyCallback);

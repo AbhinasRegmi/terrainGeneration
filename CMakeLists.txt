@@ -24,15 +24,16 @@ add_library(io_screen io/screen.cpp)
 add_library(shaders graphics/shaders.cpp)
 add_library(simplex graphics/noise/simplex.cpp)
 add_library(fractal graphics/noise/fractal.cpp)
+add_library(mesh graphics/mesh.cpp)
 
 #build the target
-add_executable(${PROJECT_NAME} main.cpp glad.c graphics/noise/simplex.cpp)
+add_executable(${PROJECT_NAME} main.cpp glad.c graphics/noise/simplex.cpp graphics/noise/fractal.cpp)
 
 
 #link the required libraries 
 target_link_libraries(${PROJECT_NAME}
 GL dl glfw
-shaders fractal
+shaders fractal mesh
 io_keyboard
 io_mouse
 io_camera

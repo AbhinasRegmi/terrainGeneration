@@ -1,14 +1,14 @@
 #include "shaders.h"
 #include "noise/simplex.h"
 #include "noise/fractal.h"
+//#include "mesh.h"
 
 #include "keyboard.h"
 #include "mouse.h"
 #include "camera.h"
 #include "screen.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include <fstream>
 
 void processInput(double dt);
 
@@ -25,7 +25,7 @@ glm::mat4 view = glm::mat4(1);
 glm::mat4 projection = glm::mat4(1);
 
 //lighting
-glm::vec3 lightPos(1.0f, 1.0f, 1.0f);
+glm::vec3 lightPos(500.0f, 500.0f, 100.0f);
 
 //for dt calcualtion
 float deltaTime = 0.0f;
@@ -44,13 +44,16 @@ int main(){
     "/home/abhinas/devs/C++/terrainGeneration/resources/shaders/shader.fs"
     );
 
+
+    //Mesh ourTerrain(100, 100, 2);
+
     //the dimension of our final terrain
     int width, height, squareGridLength;
 
     //choose squareGridLength such that both width and height is divisible i.e 100/5 = 20
     width = 1000;
     height = 1000;
-    squareGridLength = 20;
+    squareGridLength = 5;
 
     //resolution for output triangles
     //lower the better
@@ -60,23 +63,51 @@ int main(){
     std::vector<float> vertices;
 
     //create object of our noise
-    Fractal ourNoise(height, width);
+    Fractal ourNoise(height, width, 18, 2.3, 0.9);
+
 
     for( int i = 0; i < height; i++ ){
 
 
         for( int j = 0; j < width; j++ ){
 
-            //x-coord position          
+            //position         
             vertices.push_back(i);
-
-            //compute and replace y-coord position
-            //compute grid coordinates
-           vertices.push_back( ourNoise.genHeight(i, j));
-            
-            //z-coord position
+            vertices.push_back( ourNoise.genHeight(i, j));
             vertices.push_back(j);
 
+            //dummy normals
+            vertices.push_back(0.0f);
+            vertices.push_back(0.0f);
+            vertices.push_back(0.0f);
+        }
+    }
+
+    //compute the normals
+    for( int i = 0; i < height; i++ ){
+
+        for( int j = 0; j < width; j++ ){
+
+            int currVertex = (i * width + j) * 6;
+            int sideVertex = currVertex + 6;
+            int downVertex = currVertex + width * 6;
+
+            glm::vec3 e1 = glm::vec3(vertices[currVertex] - vertices[sideVertex], vertices[currVertex + 1] - vertices[sideVertex + 1], vertices[currVertex + 2] - vertices[sideVertex + 2]);
+            glm::vec3 e2 = glm::vec3(vertices[downVertex] - vertices[sideVertex], vertices[downVertex + 1] - vertices[sideVertex + 1], vertices[downVertex + 2] - vertices[sideVertex + 2]);
+
+            glm::vec3 norm = glm::cross(e2, e1);
+
+            vertices[currVertex + 3] += norm.x;
+            vertices[currVertex + 4] += norm.y;
+            vertices[currVertex + 5] += norm.z;
+
+            vertices[sideVertex + 3] += norm.x;
+            vertices[sideVertex + 4] += norm.y;
+            vertices[sideVertex + 5] += norm.z;
+
+            vertices[downVertex + 3] += norm.x;
+            vertices[downVertex + 4] += norm.y;
+            vertices[downVertex + 5] += norm.z;
         }
     }
 
@@ -114,14 +145,17 @@ int main(){
 
     //enable the attrib pointer
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);   //for vertices
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)0);
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)(sizeof(float) * 3));
 
     //bind ebo to element array buffer
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
     //draw in wireframe mode
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     //run the main loop
     while( !ourScreen.shouldClose()){
@@ -139,39 +173,37 @@ int main(){
 
         //set the transformations
         model = glm::mat4(1.0f);
-        model = glm::scale(model , glm::vec3(0.1f));
         view = ourCamera.getViewMatrix();
-        projection = glm::perspective(glm::radians(ourCamera.zoom), (float)ourScreen.screenWidth / (float)ourScreen.screenHeight, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(ourCamera.zoom), (float)ourScreen.screenWidth / (float)ourScreen.screenHeight, 0.1f, 250.0f);
 
         //send the tranformations
         ourShader.setMat4("model", model);
         ourShader.setMat4("view", view);
         ourShader.setMat4("projection", projection);
 
-        // //send the material properites
-        // ourShader.setMaterial("gold");
+        //-------------------------------------------------------------------------------//
 
-        // //send light properties
-        // //for directional light
-        // ourShader.setVec3f("dirLight.direction", glm::vec3(-0.5, -0.5, 0.6));
-        // ourShader.setVec3f("dirLight.ambient", glm::vec3(0.1f));
-        // ourShader.setVec3f("dirLight.diffuse", glm::vec3(0.5f));
-        // ourShader.setVec3f("dirLight.specular", glm::vec3(1.0f));
+        //send the camera position
+        ourShader.setVec3f("viewPos", ourCamera.cameraPos);
 
-        // //for spotLight
-        // ourShader.setVec3f("spotLight.position", ourCamera.cameraPos);
-        // ourShader.setVec3f("spotLight.direction", ourCamera.cameraFront);
-        // ourShader.setVec3f("spotLight.ambient", glm::vec3(0.0f));
-        // ourShader.setVec3f("spotLight.diffuse", glm::vec3(1.0f));
-        // ourShader.setVec3f("spotLight.specular", glm::vec3(1.0f));
-        // ourShader.setFloat("spotLight.cutOff", glm::cos(glm::radians(15.0f)));
-        // ourShader.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(20.0f)));
+        //set light properties
+        ourShader.setVec3f("light.position", lightPos);
+        ourShader.setVec3f("light.ambient", glm::vec3(0.1f));
+        ourShader.setVec3f("light.diffuse", glm::vec3(1.0f));
+        ourShader.setVec3f("light.specular", glm::vec3(0.1f));
+
+        //rgb(53, 18, 2)222, 184, 135
+        //set material properties
+        ourShader.setVec3f("material.ambient", glm::vec3(0.2f));
+        ourShader.setVec3f("material.diffuse", glm::vec3((float)222/255, (float)184/255, (float)135/255));
+        ourShader.setVec3f("material.specular", glm::vec3(0.1f));
+        ourShader.setFloat("material.shininess", 1.0f);
 
         //render the cube
         glBindVertexArray(VAO);
 
-        //draw the terrain strip by strip 
-        //don't try to draw everything at once
+       // draw the terrain strip by strip 
+       // don't try to draw everything at once
         for( unsigned int i = 0; i < totalNumStrips; i++  ){
 
             glDrawElements(
@@ -181,14 +213,17 @@ int main(){
             (void*)(sizeof(unsigned int) * (verticesPerStripe + 2) * i));
         }
 
+        // ourTerrain.draw(ourShader);
+
         ourScreen.newFrame();
     }
 
    //free spaces
     glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
+    //glDeleteBuffers(1, &EBO);
     glDeleteVertexArrays(1, &VAO);
     ourScreen.terminate();
+    //ourTerrain.clean();
     
 
     return 0;
