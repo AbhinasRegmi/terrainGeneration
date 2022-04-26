@@ -25,6 +25,7 @@ add_library(shaders graphics/shaders.cpp)
 add_library(simplex graphics/noise/simplex.cpp)
 add_library(fractal graphics/noise/fractal.cpp)
 add_library(mesh graphics/mesh.cpp)
+add_library(texture graphics/textures.cpp)
 
 #build the target
 add_executable(${PROJECT_NAME} main.cpp glad.c graphics/noise/simplex.cpp graphics/noise/fractal.cpp)
@@ -33,7 +34,7 @@ add_executable(${PROJECT_NAME} main.cpp glad.c graphics/noise/simplex.cpp graphi
 #link the required libraries 
 target_link_libraries(${PROJECT_NAME}
 GL dl glfw
-shaders fractal mesh
+shaders fractal mesh texture
 io_keyboard
 io_mouse
 io_camera
