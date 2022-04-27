@@ -8,8 +8,10 @@ class Texture{
     public:
         static int totalTextures;
         unsigned int ID;
+        unsigned int mapWidth, mapHeight;
 
         Texture(std::string texturePath);
+        Texture(unsigned int mapWidth,  unsigned int mapHeight);
 
         void setTexture(Shader& textureShader, const std::string &name);
         void useTexture();

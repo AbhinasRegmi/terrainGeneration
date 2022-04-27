@@ -14,7 +14,7 @@
 void processInput(double dt);
 
 //camera positions
-glm::vec3 cameraPos = glm::vec3(0.0f, 3.0f, 0.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 0.0f);
 Camera ourCamera(cameraPos);
 
 //make our screen class
@@ -25,8 +25,10 @@ glm::mat4 model = glm::mat4(1);
 glm::mat4 view = glm::mat4(1);
 glm::mat4 projection = glm::mat4(1);
 
-//lighting
-glm::vec3 lightDirection(1.0f, 0.5f, 0.1f);
+//light postion and direction vectors
+glm::vec3 lightDirection(0.0f, 0.0f, 0.0f);
+glm::vec3 lightFront(0.0f, 0.0f, 1.0f);
+glm::vec3 lightUp(0.0f, 1.0f, 0.0f);
 
 //for dt calcualtion
 float deltaTime = 0.0f;
@@ -52,20 +54,8 @@ int main(){
 
     Texture ourSoil("/home/abhinas/devs/C++/terrainGeneration/resources/maps/soilLow.png");
     Texture ourGrass("/home/abhinas/devs/C++/terrainGeneration/resources/maps/grass.jpg");
+    Texture ourShadow(1024, 1024);
 
-    //create a shadow map
-    const unsigned int shadowMapWidth = 1024;
-    const unsigned int shadowMapHeight = 1024;
-
-    //set parameters for texture
-    unsigned int depthMap;
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 
     //Mesh ourTerrain(100, 100, 2);
 
@@ -85,7 +75,7 @@ int main(){
     std::vector<float> vertices;
 
     //create object of our noise
-    Fractal ourNoise(height, width, 12, 3.0, 0.999);
+    Fractal ourNoise(height, width, 12, 3.0, 0.99);
 
 
     for( int i = 0; i < height; i++ ){
@@ -179,7 +169,7 @@ int main(){
 
     //bind fbo to framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, ourShadow.ID, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -198,16 +188,16 @@ int main(){
         processInput(deltaTime);
 
         //first render the scene to framebuffer
-        glViewport(0, 0, shadowMapWidth, shadowMapHeight);
+        glViewport(0, 0, ourShadow.mapWidth, ourShadow.mapHeight);
         glBindFramebuffer(GL_FRAMEBUFFER, FBO);
         glClear(GL_DEPTH_BUFFER_BIT);
         //do something
         //set the scene from view of light source
-        glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 100.0f);
+        glm::mat4 lightProjection = glm::ortho(-800.0f, 800.0f, -800.0f, 800.0f, 1.0f, 250.0f);
         glm::mat4 lightView = glm::lookAt(
-            glm::vec3(-5.75216, 0.57387, -6.06745),
-            glm::vec3(0.87667, -0.374607, 0.301862) + glm::vec3(-5.75216, 0.57387, -6.06745),
-            glm::vec3(0.0f, 1.0f, 0.0f)
+            lightDirection,
+            lightDirection + lightFront,
+            lightUp
         );
 
         // std::cout<<ourCamera.cameraFront.x<<" "<<ourCamera.cameraFront.y<<" "<<ourCamera.cameraFront.z<<"\n";
@@ -248,33 +238,27 @@ int main(){
         ourShader.setMat4("view", view);
         ourShader.setMat4("projection", projection);
 
-        // //try to rotate the light direction
-        // lightDirection.x = 0.2 * sin( 0.1 * glfwGetTime());
-        // lightDirection.y = -0.3;
-        // lightDirection.z = 1.5 * cos(0.1 * glfwGetTime());     
+        
 
         //send the camera position
         ourShader.setVec3f("viewPos", ourCamera.cameraPos);
         ourShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
         //set light properties
-        ourShader.setVec3f("light.direction", glm::vec3(-5.75216, 0.57387, -6.06745));
-        ourShader.setVec3f("light.ambient", glm::vec3(0.46));
-        ourShader.setVec3f("light.diffuse", glm::vec3(1.0f));
-        ourShader.setVec3f("light.specular", glm::vec3(0.34f));
+        ourShader.setVec3f("light.direction", lightDirection);
+        ourShader.setVec3f("light.ambient", glm::vec3(0.2));//0.46
+        ourShader.setVec3f("light.diffuse", glm::vec3(1.0f));//1.0
+        ourShader.setVec3f("light.specular", glm::vec3(0.34f));//0.34
 
         //send textues
         //--------------------------------------------------------//
         ourSoil.setTexture(ourShader, "material.diffuse[0]");
         ourGrass.setTexture(ourShader, "material.diffuse[1]");
+        ourShadow.setTexture(ourShader, "depthMap");
 
         ourSoil.useTexture();   //tex0
         ourGrass.useTexture();  //tex1
-
-        //set the texture
-        ourShader.setInt("depthMap", 2);    
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, depthMap); //tex2
+        ourShadow.useTexture(); //tex2
 
         //-------------------------------------------------//
 
@@ -315,6 +299,14 @@ void processInput(double dt){
     
     if( Keyboard::key(GLFW_KEY_ESCAPE) ){
         ourScreen.setShouldClose(true);
+    }
+
+    if( Keyboard::keyWentDown(GLFW_KEY_L)){
+
+        //update light postion as that of camera
+        lightDirection = ourCamera.cameraPos;
+        lightFront = ourCamera.cameraFront;
+        lightUp = ourCamera.cameraUp;
     }
 
     //move camera with keys

@@ -53,6 +53,27 @@ Texture::Texture(std::string texturePath){
 
 };
 
+//create textures for shadow maps
+Texture::Texture(unsigned int mapWidth,  unsigned int mapHeight):
+mapWidth(mapWidth),
+mapHeight(mapHeight)
+{
+
+    //update the texture numbers
+    thisTexture = totalTextures;
+    totalTextures++;
+
+    glGenTextures(1, &ID);
+    glBindTexture(GL_TEXTURE_2D, ID);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, mapWidth, mapHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+
+}
+
+
 void Texture::setTexture(Shader& textureShader, const std::string &name){
     
     textureShader.useShader();
