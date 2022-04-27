@@ -45,10 +45,27 @@ int main(){
     "/home/abhinas/devs/C++/terrainGeneration/resources/shaders/shader.fs"
     );
 
-    Texture ourSoil("/home/abhinas/devs/C++/terrainGeneration/resources/maps/soil.jpg");
+    Shader ourShadowShader(
+        "/home/abhinas/devs/C++/terrainGeneration/resources/shaders/framebuffer.vs",
+        "/home/abhinas/devs/C++/terrainGeneration/resources/shaders/framebuffer.fs"
+    );
+
+    Texture ourSoil("/home/abhinas/devs/C++/terrainGeneration/resources/maps/soilLow.png");
     Texture ourGrass("/home/abhinas/devs/C++/terrainGeneration/resources/maps/grass.jpg");
 
+    //create a shadow map
+    const unsigned int shadowMapWidth = 1024;
+    const unsigned int shadowMapHeight = 1024;
 
+    //set parameters for texture
+    unsigned int depthMap;
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 
     //Mesh ourTerrain(100, 100, 2);
 
@@ -78,7 +95,7 @@ int main(){
 
             //position         
             vertices.push_back(i);
-            vertices.push_back( ourNoise.genHeight(i, j));
+            vertices.push_back( ourNoise.genHeight(i, j) );
             vertices.push_back(j);
 
             //dummy normals
@@ -136,12 +153,13 @@ int main(){
     const int verticesPerStripe = (width / resolution) * 2;  //this determines the width_height_map of rendered seen
 
     //send data to gpu
-    unsigned int VAO, VBO, EBO;
+    unsigned int VAO, VBO, EBO, FBO;
 
     //generate the array buffer, buffers
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
+    glGenFramebuffers(1, &FBO);
 
     //bind the vao with vbo
     glBindVertexArray(VAO);
@@ -159,13 +177,19 @@ int main(){
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
+    //bind fbo to framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     //draw in wireframe mode
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+
     //run the main loop
     while( !ourScreen.shouldClose()){
-
-        ourScreen.update();
 
         double currentTime = glfwGetTime();
         deltaTime = currentTime - lastFrame;
@@ -173,14 +197,51 @@ int main(){
 
         processInput(deltaTime);
 
+        //first render the scene to framebuffer
+        glViewport(0, 0, shadowMapWidth, shadowMapHeight);
+        glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        //do something
+        //set the scene from view of light source
+        glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 100.0f);
+        glm::mat4 lightView = glm::lookAt(
+            glm::vec3(-5.75216, 0.57387, -6.06745),
+            glm::vec3(0.87667, -0.374607, 0.301862) + glm::vec3(-5.75216, 0.57387, -6.06745),
+            glm::vec3(0.0f, 1.0f, 0.0f)
+        );
+
+        // std::cout<<ourCamera.cameraFront.x<<" "<<ourCamera.cameraFront.y<<" "<<ourCamera.cameraFront.z<<"\n";
+        model = glm::mat4(1.0f);
+        glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+
+        ourShadowShader.useShader();
+        ourShadowShader.setMat4("model", model);
+        ourShadowShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+
+        //finallly render in framebuffer
+        for( unsigned int i = 0; i < totalNumStrips; i++  ){
+
+            glDrawElements(
+            GL_TRIANGLE_STRIP,
+            verticesPerStripe + 2,
+            GL_UNSIGNED_INT,
+            (void*)(sizeof(unsigned int) * (verticesPerStripe + 2) * i));
+        }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        //render the scene to screen
+        ourScreen.update();
+
         //use our Shader
         ourShader.useShader();
 
         //set the transformations
-        model = glm::mat4(1.0f);
         model = glm::scale(model, glm::vec3(0.3));
         view = ourCamera.getViewMatrix();
         projection = glm::perspective(glm::radians(ourCamera.zoom), (float)ourScreen.screenWidth / (float)ourScreen.screenHeight, 0.1f, 250.0f);
+
+        
 
         //send the tranformations
         ourShader.setMat4("model", model);
@@ -188,35 +249,42 @@ int main(){
         ourShader.setMat4("projection", projection);
 
         // //try to rotate the light direction
-        lightDirection.x = -0.2 * sin(1.2);
-        lightDirection.y = 0.5;
-        lightDirection.z = 0.8 * sin(3.4);     
+        // lightDirection.x = 0.2 * sin( 0.1 * glfwGetTime());
+        // lightDirection.y = -0.3;
+        // lightDirection.z = 1.5 * cos(0.1 * glfwGetTime());     
 
         //send the camera position
         ourShader.setVec3f("viewPos", ourCamera.cameraPos);
+        ourShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
         //set light properties
-        ourShader.setVec3f("light.direction", lightDirection);
-        ourShader.setVec3f("light.ambient", glm::vec3(0.3));
-        ourShader.setVec3f("light.diffuse", glm::vec3(0.5, 0.8, 0.9));
-        ourShader.setVec3f("light.specular", glm::vec3(0.1f));
+        ourShader.setVec3f("light.direction", glm::vec3(-5.75216, 0.57387, -6.06745));
+        ourShader.setVec3f("light.ambient", glm::vec3(0.46));
+        ourShader.setVec3f("light.diffuse", glm::vec3(1.0f));
+        ourShader.setVec3f("light.specular", glm::vec3(0.34f));
 
-        //rgb(53, 18, 2)222, 184, 135
-        //set material properties
+        //send textues
+        //--------------------------------------------------------//
         ourSoil.setTexture(ourShader, "material.diffuse[0]");
         ourGrass.setTexture(ourShader, "material.diffuse[1]");
 
-        ourShader.setVec3f("material.ambient", glm::vec3(0.5f));
-        ourSoil.useTexture();
-        ourGrass.useTexture();
-        ourShader.setVec3f("material.specular", glm::vec3(0.1f));
-        ourShader.setFloat("material.shininess", 1.0f);
+        ourSoil.useTexture();   //tex0
+        ourGrass.useTexture();  //tex1
+
+        //set the texture
+        ourShader.setInt("depthMap", 2);    
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, depthMap); //tex2
+
+        //-------------------------------------------------//
+
+        ourShader.setVec3f("material.specular", glm::vec3(0.35));
+        ourShader.setFloat("material.shininess", 2.0f);
 
         //render the cube
         glBindVertexArray(VAO);
 
        // draw the terrain strip by strip 
-       // don't try to draw everything at once
         for( unsigned int i = 0; i < totalNumStrips; i++  ){
 
             glDrawElements(
