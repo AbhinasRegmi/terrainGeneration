@@ -15,7 +15,7 @@
 void processInput(double dt);
 
 //camera positions
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 cameraPos = glm::vec3(0.0f, 3.0f, 0.0f);
 Camera ourCamera(cameraPos);
 
 //make our screen class
@@ -26,9 +26,9 @@ glm::mat4 model = glm::mat4(1);
 glm::mat4 view = glm::mat4(1);
 glm::mat4 projection = glm::mat4(1);
 
-//light postion and direction vectors
-glm::vec3 lightDirection(0.0f, 0.0f, 0.0f);
-glm::vec3 lightFront(0.0f, 0.0f, 1.0f);
+//lighting
+glm::vec3 lightDirection(1.0f, 0.5f, 0.1f);
+glm::vec3 lightFront(0.0f);
 glm::vec3 lightUp(0.0f, 1.0f, 0.0f);
 
 //for dt calcualtion
@@ -53,28 +53,12 @@ int main(){
     "/home/abhinas/devs/C++/terrainGeneration/resources/shaders/framebuffer.fs"
     );
 
-    // Shader ourSkyboxShader(
-    //     "/home/abhinas/devs/C++/terrainGeneration/resources/shaders/skybox.vs",
-    //     "/home/abhinas/devs/C++/terrainGeneration/resources/shaders/skybox.fs"
-    // );
-
+   
     Texture ourSoil("/home/abhinas/devs/C++/terrainGeneration/resources/maps/soilLow.png");
     Texture ourGrass("/home/abhinas/devs/C++/terrainGeneration/resources/maps/grass.jpg");
+
+   
     Texture ourShadow(1024, 1024);
-
-    // std::vector<std::string> faces
-    // {
-    //     "/home/abhinas/devs/C++/terrainGeneration/resources/maps/skybox/right.jpg",
-    //     "/home/abhinas/devs/C++/terrainGeneration/resources/maps/skybox/left.jpg",
-    //     "/home/abhinas/devs/C++/terrainGeneration/resources/maps/skybox/top.jpg",
-    //     "/home/abhinas/devs/C++/terrainGeneration/resources/maps/skybox/bottom.jpg",
-    //     "/home/abhinas/devs/C++/terrainGeneration/resources/maps/skybox/front.jpg",
-    //     "/home/abhinas/devs/C++/terrainGeneration/resources/maps/skybox/back.jpg",
-    // };
-
-    //Texture ourSkybox(faces);
-
-    //Mesh ourTerrain(100, 100, 2);
 
     //the dimension of our final terrain
     int width, height, squareGridLength;
@@ -92,7 +76,7 @@ int main(){
     std::vector<float> vertices;
 
     //create object of our noise
-    Fractal ourNoise(height, width, 12, 3.0, 0.99);
+    Fractal ourNoise(height, width, 12, 3.0, 0.999);
 
 
     for( int i = 0; i < height; i++ ){
@@ -193,72 +177,7 @@ int main(){
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
-    //--------------------------------------------------------------------//
-    //to render skybox
-
-    // float skyboxVertices[] = {
-    //     // positions          
-    //     -1.0f,  1.0f, -1.0f,
-    //     -1.0f, -1.0f, -1.0f,
-    //     1.0f, -1.0f, -1.0f,
-    //     1.0f, -1.0f, -1.0f,
-    //     1.0f,  1.0f, -1.0f,
-    //     -1.0f,  1.0f, -1.0f,
-
-    //     -1.0f, -1.0f,  1.0f,
-    //     -1.0f, -1.0f, -1.0f,
-    //     -1.0f,  1.0f, -1.0f,
-    //     -1.0f,  1.0f, -1.0f,
-    //     -1.0f,  1.0f,  1.0f,
-    //     -1.0f, -1.0f,  1.0f,
-
-    //     1.0f, -1.0f, -1.0f,
-    //     1.0f, -1.0f,  1.0f,
-    //     1.0f,  1.0f,  1.0f,
-    //     1.0f,  1.0f,  1.0f,
-    //     1.0f,  1.0f, -1.0f,
-    //     1.0f, -1.0f, -1.0f,
-
-    //     -1.0f, -1.0f,  1.0f,
-    //     -1.0f,  1.0f,  1.0f,
-    //     1.0f,  1.0f,  1.0f,
-    //     1.0f,  1.0f,  1.0f,
-    //     1.0f, -1.0f,  1.0f,
-    //     -1.0f, -1.0f,  1.0f,
-
-    //     -1.0f,  1.0f, -1.0f,
-    //     1.0f,  1.0f, -1.0f,
-    //     1.0f,  1.0f,  1.0f,
-    //     1.0f,  1.0f,  1.0f,
-    //     -1.0f,  1.0f,  1.0f,
-    //     -1.0f,  1.0f, -1.0f,
-
-    //     -1.0f, -1.0f, -1.0f,
-    //     -1.0f, -1.0f,  1.0f,
-    //     1.0f, -1.0f, -1.0f,
-    //     1.0f, -1.0f, -1.0f,
-    //     -1.0f, -1.0f,  1.0f,
-    //     1.0f, -1.0f,  1.0f
-    // };
-
-    // unsigned int skyVAO, skyVBO;
-
-    // glGenVertexArrays(1, &skyVAO);
-    // glGenBuffers(1, &skyVBO);
-
-    // //bind the vao with vbo
-    // glBindVertexArray(skyVAO);
-    // glBindBuffer(GL_ARRAY_BUFFER, skyVBO);
-    // glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
-
-    // //enable the attrib pointer
-    // glEnableVertexAttribArray(0);
-    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
-    // glBindVertexArray(0);
-    //--------------------------------------------------------------------//
-
-
-
+   
     //draw in wireframe mode
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -278,7 +197,7 @@ int main(){
         glClear(GL_DEPTH_BUFFER_BIT);
         //do something
         //set the scene from view of light source
-        glm::mat4 lightProjection = glm::ortho(-800.0f, 800.0f, -800.0f, 800.0f, 1.0f, 250.0f);
+        glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 100.0f);
         glm::mat4 lightView = glm::lookAt(
             lightDirection,
             lightDirection + lightFront,
@@ -309,26 +228,7 @@ int main(){
         //render the scene to screen
         ourScreen.update();
 
-        //render the sky box after framebuffer
-        // //-----------------------------------------------------------------//
-        // glDepthMask(GL_FALSE);
-        // ourSkyboxShader.useShader();
-        
-        // glm::mat4 skyview = glm::mat4(glm::mat3(ourCamera.getViewMatrix()));
-        // glm::mat4 skyprojection = glm::perspective(glm::radians(ourCamera.zoom), (float)ourScreen.screenWidth / (float)ourScreen.screenHeight, 0.1f, 250.0f);
-
-        // ourSkyboxShader.setMat4("view", skyview);
-        // ourSkyboxShader.setMat4("projection", skyprojection);
-
-        // glBindVertexArray(skyVAO);
-        // ourSkybox.setSkybox(ourSkyboxShader, "skybox");
-        // ourSkybox.useSkybox();
-
-        // // glDrawArrays(GL_TRIANGLES, 0, 36);
-        // //glDepthMask(GL_TRUE);
-        // glBindVertexArray(0);
-        //------------------------------------------------------------------------//
-
+      
         //use our Shader
         ourShader.useShader();
 
@@ -344,7 +244,10 @@ int main(){
         ourShader.setMat4("view", view);
         ourShader.setMat4("projection", projection);
 
-        
+        // //try to rotate the light direction
+        // lightDirection.x = 0.2 * sin( 0.1 * glfwGetTime());
+        // lightDirection.y = -0.3;
+        // lightDirection.z = 1.5 * cos(0.1 * glfwGetTime());     
 
         //send the camera position
         ourShader.setVec3f("viewPos", ourCamera.cameraPos);
@@ -352,19 +255,22 @@ int main(){
 
         //set light properties
         ourShader.setVec3f("light.direction", lightDirection);
-        ourShader.setVec3f("light.ambient", glm::vec3(0.2));//0.46
-        ourShader.setVec3f("light.diffuse", glm::vec3(1.0f));//1.0
-        ourShader.setVec3f("light.specular", glm::vec3(0.34f));//0.34
+        ourShader.setVec3f("light.ambient", glm::vec3(0.46));
+        ourShader.setVec3f("light.diffuse", glm::vec3(1.0f));
+        ourShader.setVec3f("light.specular", glm::vec3(0.34f));
 
         //send textues
         //--------------------------------------------------------//
         ourSoil.setTexture(ourShader, "material.diffuse[0]");
         ourGrass.setTexture(ourShader, "material.diffuse[1]");
-        ourShadow.setTexture(ourShader, "depthMap");
 
         ourSoil.useTexture();   //tex0
         ourGrass.useTexture();  //tex1
-        ourShadow.useTexture(); //tex2
+
+        //set the texture
+        ourShader.setInt("depthMap", 2);    
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, ourShadow.ID); //tex2
 
         //-------------------------------------------------//
 
@@ -412,7 +318,7 @@ void processInput(double dt){
 
     if( Keyboard::keyWentDown(GLFW_KEY_L)){
 
-        //update light postion as that of camera
+        //update light position as camera
         lightDirection = ourCamera.cameraPos;
         lightFront = ourCamera.cameraFront;
         lightUp = ourCamera.cameraUp;

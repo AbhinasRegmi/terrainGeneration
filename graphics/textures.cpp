@@ -73,53 +73,6 @@ mapHeight(mapHeight)
 
 }
 
-//attach textures for sky box
-Texture::Texture(std::vector<std::string> faces){
-
-    int width, height, nChannels;
-    stbi_set_flip_vertically_on_load(true);
-
-    glGenTextures(1, &ID);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
-
-    
-
-    unsigned char* data;
-
-    for(unsigned int i = 0; i < faces.size(); i++){
-
-        data = stbi_load(faces[i].c_str(), &width, &height, &nChannels, 0);
-
-        if( data ){
-            //determine the channel type
-            GLenum colorMode = GL_RGB;
-            switch (nChannels) {
-            case 1:
-                colorMode = GL_RED;
-            break;
-            case 4:
-                colorMode = GL_RGBA;
-            break;
-            };
-
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, colorMode, width, height, 0, colorMode, GL_UNSIGNED_BYTE, data);
-        }else{
-
-            std::cout<<"cube maps couldn't be found or they are not in order as cubemap1, cubemap2 ,etc"<<"\n";
-        }
-
-        stbi_image_free(data);
-
-    }  
-
-    //set the wrapping parameters
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-}
-
 
 void Texture::setTexture(Shader& textureShader, const std::string &name){
     
@@ -127,19 +80,9 @@ void Texture::setTexture(Shader& textureShader, const std::string &name){
     textureShader.setInt(name.c_str(), thisTexture);
 };
 
-void Texture::setSkybox(Shader& textureShader, const std::string &name){
-    textureShader.useShader();
-    textureShader.setInt(name.c_str(), 0);
-}
-
 
 void Texture::useTexture(){
 
     glActiveTexture(GL_TEXTURE0 + thisTexture);
     glBindTexture(GL_TEXTURE_2D, ID);
 };
-
-void Texture::useSkybox(){
-
-    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-}
