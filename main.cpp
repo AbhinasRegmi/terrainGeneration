@@ -9,7 +9,8 @@
 #include "camera.h"
 #include "screen.h"
 
-#include <fstream>
+#include <vector>
+#include <string>
 
 void processInput(double dt);
 
@@ -48,14 +49,30 @@ int main(){
     );
 
     Shader ourShadowShader(
-        "/home/abhinas/devs/C++/terrainGeneration/resources/shaders/framebuffer.vs",
-        "/home/abhinas/devs/C++/terrainGeneration/resources/shaders/framebuffer.fs"
+    "/home/abhinas/devs/C++/terrainGeneration/resources/shaders/framebuffer.vs",
+    "/home/abhinas/devs/C++/terrainGeneration/resources/shaders/framebuffer.fs"
     );
+
+    // Shader ourSkyboxShader(
+    //     "/home/abhinas/devs/C++/terrainGeneration/resources/shaders/skybox.vs",
+    //     "/home/abhinas/devs/C++/terrainGeneration/resources/shaders/skybox.fs"
+    // );
 
     Texture ourSoil("/home/abhinas/devs/C++/terrainGeneration/resources/maps/soilLow.png");
     Texture ourGrass("/home/abhinas/devs/C++/terrainGeneration/resources/maps/grass.jpg");
     Texture ourShadow(1024, 1024);
 
+    // std::vector<std::string> faces
+    // {
+    //     "/home/abhinas/devs/C++/terrainGeneration/resources/maps/skybox/right.jpg",
+    //     "/home/abhinas/devs/C++/terrainGeneration/resources/maps/skybox/left.jpg",
+    //     "/home/abhinas/devs/C++/terrainGeneration/resources/maps/skybox/top.jpg",
+    //     "/home/abhinas/devs/C++/terrainGeneration/resources/maps/skybox/bottom.jpg",
+    //     "/home/abhinas/devs/C++/terrainGeneration/resources/maps/skybox/front.jpg",
+    //     "/home/abhinas/devs/C++/terrainGeneration/resources/maps/skybox/back.jpg",
+    // };
+
+    //Texture ourSkybox(faces);
 
     //Mesh ourTerrain(100, 100, 2);
 
@@ -162,6 +179,7 @@ int main(){
 
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)(sizeof(float) * 3));
+    glBindVertexArray(0);
 
     //bind ebo to element array buffer
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -173,6 +191,73 @@ int main(){
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+    //--------------------------------------------------------------------//
+    //to render skybox
+
+    // float skyboxVertices[] = {
+    //     // positions          
+    //     -1.0f,  1.0f, -1.0f,
+    //     -1.0f, -1.0f, -1.0f,
+    //     1.0f, -1.0f, -1.0f,
+    //     1.0f, -1.0f, -1.0f,
+    //     1.0f,  1.0f, -1.0f,
+    //     -1.0f,  1.0f, -1.0f,
+
+    //     -1.0f, -1.0f,  1.0f,
+    //     -1.0f, -1.0f, -1.0f,
+    //     -1.0f,  1.0f, -1.0f,
+    //     -1.0f,  1.0f, -1.0f,
+    //     -1.0f,  1.0f,  1.0f,
+    //     -1.0f, -1.0f,  1.0f,
+
+    //     1.0f, -1.0f, -1.0f,
+    //     1.0f, -1.0f,  1.0f,
+    //     1.0f,  1.0f,  1.0f,
+    //     1.0f,  1.0f,  1.0f,
+    //     1.0f,  1.0f, -1.0f,
+    //     1.0f, -1.0f, -1.0f,
+
+    //     -1.0f, -1.0f,  1.0f,
+    //     -1.0f,  1.0f,  1.0f,
+    //     1.0f,  1.0f,  1.0f,
+    //     1.0f,  1.0f,  1.0f,
+    //     1.0f, -1.0f,  1.0f,
+    //     -1.0f, -1.0f,  1.0f,
+
+    //     -1.0f,  1.0f, -1.0f,
+    //     1.0f,  1.0f, -1.0f,
+    //     1.0f,  1.0f,  1.0f,
+    //     1.0f,  1.0f,  1.0f,
+    //     -1.0f,  1.0f,  1.0f,
+    //     -1.0f,  1.0f, -1.0f,
+
+    //     -1.0f, -1.0f, -1.0f,
+    //     -1.0f, -1.0f,  1.0f,
+    //     1.0f, -1.0f, -1.0f,
+    //     1.0f, -1.0f, -1.0f,
+    //     -1.0f, -1.0f,  1.0f,
+    //     1.0f, -1.0f,  1.0f
+    // };
+
+    // unsigned int skyVAO, skyVBO;
+
+    // glGenVertexArrays(1, &skyVAO);
+    // glGenBuffers(1, &skyVBO);
+
+    // //bind the vao with vbo
+    // glBindVertexArray(skyVAO);
+    // glBindBuffer(GL_ARRAY_BUFFER, skyVBO);
+    // glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
+
+    // //enable the attrib pointer
+    // glEnableVertexAttribArray(0);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, (void*)0);
+    // glBindVertexArray(0);
+    //--------------------------------------------------------------------//
+
+
 
     //draw in wireframe mode
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -209,6 +294,7 @@ int main(){
         ourShadowShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
         //finallly render in framebuffer
+        glBindFramebuffer(GL_FRAMEBUFFER, FBO);
         for( unsigned int i = 0; i < totalNumStrips; i++  ){
 
             glDrawElements(
@@ -222,6 +308,26 @@ int main(){
 
         //render the scene to screen
         ourScreen.update();
+
+        //render the sky box after framebuffer
+        // //-----------------------------------------------------------------//
+        // glDepthMask(GL_FALSE);
+        // ourSkyboxShader.useShader();
+        
+        // glm::mat4 skyview = glm::mat4(glm::mat3(ourCamera.getViewMatrix()));
+        // glm::mat4 skyprojection = glm::perspective(glm::radians(ourCamera.zoom), (float)ourScreen.screenWidth / (float)ourScreen.screenHeight, 0.1f, 250.0f);
+
+        // ourSkyboxShader.setMat4("view", skyview);
+        // ourSkyboxShader.setMat4("projection", skyprojection);
+
+        // glBindVertexArray(skyVAO);
+        // ourSkybox.setSkybox(ourSkyboxShader, "skybox");
+        // ourSkybox.useSkybox();
+
+        // // glDrawArrays(GL_TRIANGLES, 0, 36);
+        // //glDepthMask(GL_TRUE);
+        // glBindVertexArray(0);
+        //------------------------------------------------------------------------//
 
         //use our Shader
         ourShader.useShader();
@@ -284,9 +390,12 @@ int main(){
     }
 
    //free spaces
-    glDeleteBuffers(1, &VBO);
-    //glDeleteBuffers(1, &EBO);
+    // glDeleteVertexArrays(1, &skyVAO);
     glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    // glDeleteBuffers(1, &skyVBO);
+    glDeleteBuffers(1, &EBO);
+    glDeleteBuffers(1, &FBO);
     ourScreen.terminate();
     //ourTerrain.clean();
     
