@@ -52,6 +52,10 @@ int main(){
     "/home/abhinas/devs/C++/terrainGeneration/resources/shaders/framebuffer.fs"
     );
 
+    Shader ourSkyShader(
+    "/home/abhinas/devs/C++/terrainGeneration/resources/shaders/sky.vs",
+    "/home/abhinas/devs/C++/terrainGeneration/resources/shaders/sky.fs");
+
    
     Texture ourSoil("/home/abhinas/devs/C++/terrainGeneration/resources/maps/soil.jpg");
     Texture ourGrass("/home/abhinas/devs/C++/terrainGeneration/resources/maps/grass.jpg");
