@@ -79,9 +79,21 @@ float ShadowCalculation( vec4 fragPosLightSpace, vec3 lightDir, vec3 norm){
   float currentDepth = projCoords.z;
 
   //for smoother shadows
+  float shadow = 0.0f;
   float bias = max(0.05 * (1.0 - dot(norm, lightDir)), 0.005);
 
-  float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+  //we will use percentage-closer-filtering for blur edges
+  vec2 texelSize = 1.0 / textureSize(depthMap, 0);
+  for( int i = -1; i <= 1; ++i ){
+
+    for( int j = -1; j <= 1; ++j){
+
+      float pcf = texture(depthMap, projCoords.xy + vec2(i, j) * texelSize).r;
+      shadow += currentDepth - bias > pcf ? 1.0 : 0.0;
+    }
+  }
+
+  shadow = shadow / 9.0;
 
   return shadow;
 }

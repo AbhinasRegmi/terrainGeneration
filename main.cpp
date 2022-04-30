@@ -57,7 +57,7 @@ int main(){
     Texture ourGrass("/home/abhinas/devs/C++/terrainGeneration/resources/maps/grass.jpg");
 
    
-    Texture ourShadow(1000, 1000);
+    Texture ourShadow(4500, 4500);
 
     //the dimension of our final terrain
     int width, height, squareGridLength;

@@ -56,6 +56,8 @@ void Screen::loadOpenGl(){
     glViewport(0, 0, screenWidth, screenHeight);
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
 };
 
 void Screen::update(){
