@@ -11,7 +11,7 @@ class Texture{
         unsigned int ID;
 
         Texture(std::string texturePath);
-        Texture::Texture(unsigned int mapWidth,  unsigned int mapHeight);
+        Texture(unsigned int mapWidth,  unsigned int mapHeight);
 
         void setTexture(Shader& textureShader, const std::string &name);
 

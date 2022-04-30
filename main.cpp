@@ -2,7 +2,6 @@
 #include "textures.h"
 #include "noise/simplex.h"
 #include "noise/fractal.h"
-//#include "mesh.h"
 
 #include "keyboard.h"
 #include "mouse.h"
@@ -69,7 +68,6 @@ int main(){
     squareGridLength = 10;
 
     //resolution for output triangles
-    //lower the better
     int resolution = 9;
 
     //generate our plane
@@ -80,7 +78,6 @@ int main(){
 
 
     for( int i = 0; i < height; i++ ){
-
 
         for( int j = 0; j < width; j++ ){
 
@@ -141,12 +138,12 @@ int main(){
 
     //to draw terrain strip by strip find total no_of strip
     const int totalNumStrips = (height - 1) / resolution;
-    const int verticesPerStripe = (width / resolution) * 2;  //this determines the width_height_map of rendered seen
+    const int verticesPerStripe = (width / resolution) * 2;
 
     //send data to gpu
     unsigned int VAO, VBO, EBO, FBO;
 
-    //generate the array buffer, buffers
+    //generate the array buffers
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
@@ -163,7 +160,6 @@ int main(){
 
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)(sizeof(float) * 3));
-    glBindVertexArray(0);
 
     //bind ebo to element array buffer
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -183,7 +179,7 @@ int main(){
 
 
     //run the main loop
-    while( !ourScreen.shouldClose()){
+    while( !ourScreen.shouldClose() ){
 
         double currentTime = glfwGetTime();
         deltaTime = currentTime - lastFrame;
@@ -197,14 +193,13 @@ int main(){
         glClear(GL_DEPTH_BUFFER_BIT);
         //do something
         //set the scene from view of light source
-        glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 100.0f);
+        glm::mat4 lightProjection = glm::ortho(-1000.0f, 1000.0f, -1000.0f, 1000.0f, 1.0f, 100.0f);
         glm::mat4 lightView = glm::lookAt(
             lightDirection,
             lightDirection + lightFront,
             lightUp
         );
 
-        // std::cout<<ourCamera.cameraFront.x<<" "<<ourCamera.cameraFront.y<<" "<<ourCamera.cameraFront.z<<"\n";
         model = glm::mat4(1.0f);
         glm::mat4 lightSpaceMatrix = lightProjection * lightView;
 
@@ -244,11 +239,6 @@ int main(){
         ourShader.setMat4("view", view);
         ourShader.setMat4("projection", projection);
 
-        // //try to rotate the light direction
-        // lightDirection.x = 0.2 * sin( 0.1 * glfwGetTime());
-        // lightDirection.y = -0.3;
-        // lightDirection.z = 1.5 * cos(0.1 * glfwGetTime());     
-
         //send the camera position
         ourShader.setVec3f("viewPos", ourCamera.cameraPos);
         ourShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
@@ -267,7 +257,6 @@ int main(){
         ourSoil.useTexture();   //tex0
         ourGrass.useTexture();  //tex1
 
-        //set the texture
         ourShader.setInt("depthMap", 2);    
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, ourShadow.ID); //tex2
@@ -290,20 +279,15 @@ int main(){
             (void*)(sizeof(unsigned int) * (verticesPerStripe + 2) * i));
         }
 
-        // ourTerrain.draw(ourShader);
 
         ourScreen.newFrame();
     }
 
-   //free spaces
-    // glDeleteVertexArrays(1, &skyVAO);
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
-    // glDeleteBuffers(1, &skyVBO);
     glDeleteBuffers(1, &EBO);
     glDeleteBuffers(1, &FBO);
     ourScreen.terminate();
-    //ourTerrain.clean();
     
 
     return 0;
