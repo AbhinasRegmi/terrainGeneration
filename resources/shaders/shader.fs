@@ -5,6 +5,8 @@ out vec4 FragColor;
 struct Material{
 
   sampler2D diffuse[2];
+  vec3 ambient[2];
+  // vec3 diffuse[2];
   vec3 specular;
   float shininess;
 };
@@ -65,7 +67,7 @@ vec3 triplarMapping( sampler2D texture, vec3 normal, vec3 position, int shadow){
 
 }
 
-float ShadowCalculation( vec4 fragPosLightSpace ){
+float ShadowCalculation( vec4 fragPosLightSpace, vec3 lightDir, vec3 norm){
 
   //divide by perspective
   vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
@@ -76,7 +78,10 @@ float ShadowCalculation( vec4 fragPosLightSpace ){
   //this has the depth of current fragment
   float currentDepth = projCoords.z;
 
-  float shadow = currentDepth > closestDepth ? 1.0 : 0.0;
+  //for smoother shadows
+  float bias = max(0.05 * (1.0 - dot(norm, lightDir)), 0.005);
+
+  float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
 
   return shadow;
 }
@@ -90,23 +95,29 @@ void main(){
   float diff = max(dot(norm, lightDir), 0.0);
   vec3 tex1 = triplarMapping(material.diffuse[0], normal, FragPos, 0);
   vec3 tex2 = triplarMapping(material.diffuse[1], normal, FragPos, 0);
+  // vec3 tex1 = material.diffuse[0];
+  // vec3 tex2 = material.diffuse[1];
   vec3 diffTex;
+  vec3 amb;
 
 //texturing diffuse based on slope
   if(norm.y > 0.73){
 
     diffTex = tex2;
+    amb = material.ambient[1];
   }else if( norm.y > 0.721){
 
-    diffTex = mix(tex2, tex1, 0.5);
+    diffTex = mix(tex2, tex1, smoothstep(0.72f, 0.73f, norm.y));
+    amb = mix(material.ambient[1], material.ambient[0], 0.5);
   }
   else{
     diffTex = tex1;
+    amb = material.ambient[0];
   }
 
 
-  vec3 diffuse = light.diffuse * diff;
-  vec3 ambient = light.ambient;
+  vec3 diffuse = light.diffuse * (diff * diffTex);
+  vec3 ambient = light.ambient * amb;
 
   //specular
   vec3 viewDir = normalize(viewPos - FragPos);
@@ -115,9 +126,9 @@ void main(){
   vec3 specular = light.specular * ( spec * material.specular);
 
   //shadows
-  float shadow = ShadowCalculation(fs_in.FragPosLightSpace);
+  float shadow = ShadowCalculation(fs_in.FragPosLightSpace, lightDir, norm);
 
-  vec3 result = (ambient + (shadow) * (diffuse + specular)) * diffTex;
+  vec3 result = (ambient + (1 - shadow) * (diffuse + specular));
 
   FragColor = vec4(result, 1.0);
 }

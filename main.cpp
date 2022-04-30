@@ -53,11 +53,11 @@ int main(){
     );
 
    
-    Texture ourSoil("/home/abhinas/devs/C++/terrainGeneration/resources/maps/soilLow.png");
+    Texture ourSoil("/home/abhinas/devs/C++/terrainGeneration/resources/maps/soil.jpg");
     Texture ourGrass("/home/abhinas/devs/C++/terrainGeneration/resources/maps/grass.jpg");
 
    
-    Texture ourShadow(1024, 1024);
+    Texture ourShadow(1000, 1000);
 
     //the dimension of our final terrain
     int width, height, squareGridLength;
@@ -74,7 +74,7 @@ int main(){
     std::vector<float> vertices;
 
     //create object of our noise
-    Fractal ourNoise(height, width, 12, 3.0, 0.999);
+    Fractal ourNoise(height, width, 12, 3.0, 0.867);
 
 
     for( int i = 0; i < height; i++ ){
@@ -193,7 +193,7 @@ int main(){
         glClear(GL_DEPTH_BUFFER_BIT);
         //do something
         //set the scene from view of light source
-        glm::mat4 lightProjection = glm::ortho(-1000.0f, 1000.0f, -1000.0f, 1000.0f, 1.0f, 100.0f);
+        glm::mat4 lightProjection = glm::ortho(-1000.0f, 1000.0f, -1000.0f, 1000.0f, 1.0f, 600.0f);
         glm::mat4 lightView = glm::lookAt(
             lightDirection,
             lightDirection + lightFront,
@@ -228,10 +228,9 @@ int main(){
         ourShader.useShader();
 
         //set the transformations
-        model = glm::scale(model, glm::vec3(0.3));
         view = ourCamera.getViewMatrix();
-        projection = glm::perspective(glm::radians(ourCamera.zoom), (float)ourScreen.screenWidth / (float)ourScreen.screenHeight, 0.1f, 250.0f);
-
+        projection = glm::perspective(glm::radians(ourCamera.zoom), (float)ourScreen.screenWidth / (float)ourScreen.screenHeight, 0.1f, 600.0f);
+        model = glm::scale(model, glm::vec3(0.8));
         
 
         //send the tranformations
@@ -245,14 +244,12 @@ int main(){
 
         //set light properties
         ourShader.setVec3f("light.direction", lightDirection);
-        ourShader.setVec3f("light.ambient", glm::vec3(0.46));
+        ourShader.setVec3f("light.ambient", glm::vec3(0.5));
         ourShader.setVec3f("light.diffuse", glm::vec3(1.0f));
-        ourShader.setVec3f("light.specular", glm::vec3(0.34f));
+        ourShader.setVec3f("light.specular", glm::vec3(0.14f));
 
         //send textues
         //--------------------------------------------------------//
-        ourSoil.setTexture(ourShader, "material.diffuse[0]");
-        ourGrass.setTexture(ourShader, "material.diffuse[1]");
 
         ourSoil.useTexture();   //tex0
         ourGrass.useTexture();  //tex1
@@ -263,6 +260,12 @@ int main(){
 
         //-------------------------------------------------//
 
+        ourSoil.setTexture(ourShader, "material.diffuse[0]");
+        ourGrass.setTexture(ourShader, "material.diffuse[1]");
+        ourShader.setVec3f("material.ambient[0]", glm::vec3(0.345f));
+        ourShader.setVec3f("material.ambient[1]", glm::vec3(0.012f));
+        // ourShader.setVec3f("material.diffuse[0]", glm::vec3(0.545, 0.27, 0.074));
+        // ourShader.setVec3f("material.diffuse[1]", glm::vec3(0.337, 0.49, 0.30));
         ourShader.setVec3f("material.specular", glm::vec3(0.35));
         ourShader.setFloat("material.shininess", 2.0f);
 
